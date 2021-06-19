@@ -19,3 +19,8 @@
 brakeman-output.tabs
 *.sql
 
+/.rspec
+
+/db/development.sqlite3
+/db/test.sqlite3
+
