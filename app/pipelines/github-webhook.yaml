@@ -1,0 +1,22 @@
+
+stages:
+  - name: fetch
+    tasks:
+      - image: registry.core.build-the-web.com/github-fetcher:0.1.0
+        variables:
+          - github_token
+          - repository_name
+
+  - name: parse
+    tasks:
+      - image: registry.core.build-the-web.com/devine:0.1.0
+
+  - name: run
+    tasks:
+      - image: registry.core.build-the-web.com/devine:0.1.0
+        variables:
+          - kube_config
+
+  - name: cleanup
+    tasks:
+      - image: registry.core.build-the.web.com/devine:0.1.0
