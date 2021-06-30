@@ -8,9 +8,14 @@ class Webhooks::GithubController < ApplicationController
 
     params.permit!
 
-    Pipeline.create_named_pipeline 'github-webhook', params.to_h
+    github = params['github'].to_h
+    repository = github['repository']
+    project = Project.find_by uuid: Project.build_uuid(repository['owner']['name'], repository['name'])
+    return head :no_content unless project
 
-    head :no_content
+    project.create_pipeline 'github-webhook', github
+
+    head :created
   end
 
 

@@ -18,22 +18,36 @@ RSpec.describe "Webhooks::Githubs", type: :request do
 
       let (:webhook_secret) { 'foo' }
 
-      it 'SHOULD respond with no content' do
-        post webhooks_github_index_path, params: hook_payload, headers: headers
+      context 'WHEN the project DOES NOT exist' do
+        it 'SHOULD respond with no content' do
+          post webhooks_github_index_path, params: hook_payload, headers: headers
 
-        expect(response).to have_http_status(:no_content)
+          expect(response).to have_http_status(:no_content)
+        end
       end
 
-      it 'SHOULD create a pipeline' do
-        post webhooks_github_index_path, params: hook_payload, headers: headers
+      context 'WHEN the project DOES exist' do
+        before :each do
+          Project.create! name: :foo, uuid: 'scones-devine'
+        end
 
-        expect(Pipeline.count).to eq 1
-      end
+        it 'SHOULD respond with created' do
+          post webhooks_github_index_path, params: hook_payload, headers: headers
 
-      it 'SHOULD autogenerate task names' do
-        post webhooks_github_index_path, params: hook_payload, headers: headers
+          expect(response).to have_http_status(:created)
+        end
 
-        expect(Pipeline.first.tasks.last.name).to eq 'cleanup-0'
+        it 'SHOULD create a pipeline' do
+          post webhooks_github_index_path, params: hook_payload, headers: headers
+
+          expect(Pipeline.count).to eq 1
+        end
+
+        it 'SHOULD autogenerate task names' do
+          post webhooks_github_index_path, params: hook_payload, headers: headers
+
+          expect(Pipeline.first.tasks.last.name).to eq 'cleanup-0'
+        end
       end
 
     end

@@ -1,0 +1,89 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require_relative "../config/environment"
+require 'thor'
+require_relative '../lib/thor/sub_command_base'
+
+module App
+
+  class Runner < SubCommandBase
+
+    option :interval, type: :numeric, default: 60
+    desc "start", "start the runner to check for new tasks"
+    def start
+      loop do
+        PipelineStageTask.unprocessed.each(&:process)
+        sleep options[:interval]
+      end
+    end
+
+  end
+
+  class Pipeline < SubCommandBase
+
+    desc "prepare", "prepare the pipeline run"
+    def prepare
+      require_relative '../lib/pipeline'
+    end
+
+    desc "execute", "execute the child pipeline"
+    def execute
+      require_relative '../lib/pipeline'
+    end
+
+    desc "clean", "clean the pipeline after the run"
+    def clean
+      require_relative '../lib/pipeline'
+    end
+
+  end
+
+  class Project < SubCommandBase
+
+    option :name, type: :string, required: true
+    option :uuid, type: :string, required: true
+    desc "create", "generate a new project"
+    def create
+      ::Project.create! name: options[:name], uuid: options[:uuid]
+    end
+
+    option :project_uuid, alias: :u, type: :string, required: true
+    option :name, alias: :n, type: :string, required: true
+    option :value, alias: :v, type: :string, required: true
+    desc "add_secret", "add a secret value for this project"
+    def add_secret
+      ::Project.find_by(uuid: options[:project_uuid]).add_to_secret(options[:name], options[:value])
+    end
+
+    option :project_uuid, alias: :u, type: :string, required: true
+    option :name, alias: :n, type: :string, required: true
+    option :value, alias: :v, type: :string, required: true
+    desc "add_config", "add a config value for this project"
+    def add_config
+      ::Project.find_by(uuid: options[:project_uuid]).add_to_config(options[:name], options[:value])
+    end
+
+    option :project_uuid, alias: :u, type: :string, required: true
+    options :namespace, alias: :n, type: :string, required: true
+    desc "set namespace", "set the namespace for this project"
+    def set_namespace
+      ::Project.set_namespace(options[:project_uuid], options[:namespace])
+    end
+
+  end
+
+  class CLI < Thor
+   desc "runner", "start runners and list their tasks"
+   subcommand "runner", Runner
+
+   desc "pipeline", "manage the pipeline"
+   subcommand "pipeline", Pipeline
+
+   desc "project", "manage projects"
+   subcommand "project", Project
+  end
+
+end
+
+App::CLI.start

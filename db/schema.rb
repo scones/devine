@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_06_19_080609) do
+ActiveRecord::Schema.define(version: 2021_06_26_233015) do
 
   create_table "pipeline_stage_tasks", force: :cascade do |t|
     t.integer "stage_id", null: false
@@ -35,7 +35,28 @@ ActiveRecord::Schema.define(version: 2021_06_19_080609) do
   create_table "pipelines", force: :cascade do |t|
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.text "variables", default: "{}", null: false
+    t.integer "project_id", null: false
     t.index "\"state\"", name: "index_pipelines_on_state"
+    t.index ["project_id"], name: "index_pipelines_on_project_id"
+  end
+
+  create_table "project_configs", force: :cascade do |t|
+    t.integer "project_id", null: false
+    t.string "key", null: false
+    t.string "value", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["project_id", "key"], name: "index_project_configs_on_project_id_and_key", unique: true
+  end
+
+  create_table "projects", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.string "uuid", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["slug"], name: "index_projects_on_slug", unique: true
   end
 
 end

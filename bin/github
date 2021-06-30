@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require_relative "../config/environment"
+require 'thor'
+require_relative '../lib/thor/sub_command_base'
+
+module App
+
+  class Cloner < SubCommandBase
+
+    desc "repo", "clone a github repo into a directory"
+    def repo
+      Github::Client.clone_project_from_pipeline ENV['PIPELINE_ID']
+    end
+
+  end
+
+  class CLI < Thor
+    desc "clone", "clone stuff"
+    subcommand "clone", Cloner
+  end
+
+end
+
+App::CLI.start
