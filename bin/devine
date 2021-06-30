@@ -74,14 +74,14 @@ module App
   end
 
   class CLI < Thor
-   desc "runner", "start runners and list their tasks"
-   subcommand "runner", Runner
+    desc "runner", "start runners and list their tasks"
+    subcommand "runner", Runner
 
-   desc "pipeline", "manage the pipeline"
-   subcommand "pipeline", Pipeline
+    desc "pipeline", "manage the pipeline"
+    subcommand "pipeline", Pipeline
 
-   desc "project", "manage projects"
-   subcommand "project", Project
+    desc "project", "manage projects"
+    subcommand "project", Project
   end
 
 end
