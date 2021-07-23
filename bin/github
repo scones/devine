@@ -9,9 +9,11 @@ module App
 
   class Cloner < SubCommandBase
 
+    option :pipeline_id, type: :numeric, required: true
+    option :base_dir, type: :string, required: true
     desc "repo", "clone a github repo into a directory"
     def repo
-      Github::Client.clone_project_from_pipeline ENV['PIPELINE_ID']
+      Github::Client.clone_project_from_pipeline options[:pipeline_id], base_dir
     end
 
   end

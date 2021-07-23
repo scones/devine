@@ -80,7 +80,7 @@ COPY /app /application/app
 COPY --from=bundler /bundler/vendor/bundle /application/vendor/bundle
 
 RUN apt-get update
-RUN apt-get install -y libsqlite3-dev
+RUN apt-get install -y libsqlite3-dev git-core
 RUN bundle install --without development test -j4 --retry 3 --path /application/vendor/bundle
 RUN ls -l /application/vendor/bundle/ruby/${GEM_RUBY_VERSION}
 RUN rm -rf /application/vendor/bundle/ruby/${GEM_RUBY_VERSION}/cache/*.gem

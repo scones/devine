@@ -13,7 +13,7 @@ class Webhooks::GithubController < ApplicationController
     project = Project.find_by uuid: Project.build_uuid(repository['owner']['name'], repository['name'])
     return head :no_content unless project
 
-    project.create_pipeline 'github-webhook', github
+    project.create_pipeline 'github-webhook', github.merge(triggered_by: :webhook)
 
     head :created
   end

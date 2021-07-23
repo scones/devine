@@ -5,29 +5,27 @@ module Kubernetes
   class ConfigMap < AbstractResource
 
     def initialize name, namespace, data = {}
-      name = slugify_name(name)
-      configmap = template 'configmap'
+      name = ConfigMap.slugify_name(name)
+      configmap = ConfigMap.resource_from_template 'configmap'
       configmap.metadata.name = name
       configmap.metadata.namespace = namespace
 
-      @configmap = client.get_resource configmap
+      @configmap = ConfigMap.client.get_resource configmap
     rescue K8s::Error::NotFound => e
-      data.each do |name, value|
-        configmap.spec.data[name] = JSON.dump(value)
-      end
-
-      @configmap = client.create_resource configmap
+      configmap.data = data #.transform_values{|value| JSON.dump(value)}
+      @configmap = ConfigMap.client.create_resource configmap
     end
 
     def data
-      @configmap.data
+      return {} unless @configmap
+
+      @data = @configmap.try(:data).to_h #.transform_values{|value| JSON.parse value }
     end
 
     def data= data
-      data.each do |key, value|
-        @configmap.spec.data[key] = JSON.dump(value)
-      end
-      client.patch_resource @configmap
+      @data = data
+      @configmap.data = data #.transform_values{ |value| JSON.dump(value) }
+      @configmap = ConfigMap.client.update_resource @configmap
     end
   end
 

@@ -2,20 +2,20 @@
 stages:
   - name: prepare
     tasks:
-      - image: registry.core.build-the-web.com/devine:0.1.0
-        script: devine pipeline prepare
+      - image: registry.core.build-the-web.com/devine:0.1.4
+        script: devine pipeline prepare --pipeline-id "${PIPELINE_ID}" --base-dir "${BASE_DIR}"
 
   - name: clone
     tasks:
-      - image: registry.core.build-the-web.com/devine:0.1.0
-        script: github clone repo
+      - image: registry.core.build-the-web.com/devine:0.1.4
+        script: github clone repo --pipeline-id "${PIPELINE_ID}" --base-dir "${BASE_DIR}"
 
   - name: parse
     tasks:
-      - image: registry.core.build-the-web.com/devine:0.1.0
-        script: devine pipeline run
+      - image: registry.core.build-the-web.com/devine:0.1.4
+        script: devine pipeline run --pipeline-id "${PIPELINE_ID}" --base-dir "${BASE_DIR}"
 
   - name: cleanup
     tasks:
-      - image: registry.core.build-the.web.com/devine:0.1.0
-        script: devine pipeline clean
+      - image: registry.core.build-the.web.com/devine:0.1.4
+        script: devine pipeline clean --pipeline-id "${PIPELINE_ID}" --base-dir "${BASE_DIR}"

@@ -22,14 +22,9 @@ module Github
     end
 
     def self.clone_project_from_pipeline pipeline_id
-      pipeline = Pipeline.find
+      pipeline = Pipeline.find pipeline_id
       project = pipeline.project
-
-      secret_data = projext.secret_data
-
-      variables = pipeline.variables
-      repo_uri = variables['uri']
-      client = Github::Client.new repo_uri, user: secret.data['access_token'], password: 'x-oauth-token'
+      client = Github::Client.new project.config.data[:repo_uri], user: project.secret.data['access_token'], password: 'x-oauth-token'
       client.clone_with_token_into_dir pipeline.working_directory(ENV['DEVINE_WORKING_DIRECTORY'])
     end
 

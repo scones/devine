@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_06_26_233015) do
+ActiveRecord::Schema.define(version: 2021_07_04_133835) do
 
   create_table "pipeline_stage_tasks", force: :cascade do |t|
     t.integer "stage_id", null: false
@@ -22,6 +22,8 @@ ActiveRecord::Schema.define(version: 2021_06_26_233015) do
     t.text "variables", default: "null", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "job_name"
+    t.integer "number_of_retries", default: 0, null: false
   end
 
   create_table "pipeline_stages", force: :cascade do |t|
@@ -29,7 +31,10 @@ ActiveRecord::Schema.define(version: 2021_06_26_233015) do
     t.string "name", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.string "state", default: "created", null: false
     t.index ["pipeline_id", "name"], name: "index_pipeline_stages_on_pipeline_id_and_name"
+    t.index ["pipeline_id", "state", "id"], name: "index_pipeline_stages_on_pipeline_id_and_state_and_id"
+    t.index ["state"], name: "index_pipeline_stages_on_state"
   end
 
   create_table "pipelines", force: :cascade do |t|
@@ -37,8 +42,10 @@ ActiveRecord::Schema.define(version: 2021_06_26_233015) do
     t.datetime "updated_at", precision: 6, null: false
     t.text "variables", default: "{}", null: false
     t.integer "project_id", null: false
-    t.index "\"state\"", name: "index_pipelines_on_state"
+    t.string "state", default: "created", null: false
     t.index ["project_id"], name: "index_pipelines_on_project_id"
+    t.index ["state", "id"], name: "index_pipelines_on_state_and_id"
+    t.index ["state"], name: "index_pipelines_on_state"
   end
 
   create_table "project_configs", force: :cascade do |t|

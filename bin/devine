@@ -13,30 +13,82 @@ module App
     desc "start", "start the runner to check for new tasks"
     def start
       loop do
-        PipelineStageTask.unprocessed.each(&:process)
+        ::Pipeline.processable_tasks.each(&:process)
         sleep options[:interval]
       end
     end
+  end
 
+  class PipelineTask < SubCommandBase
+    option :pipeline_id, aliases: :p, type: :numeric
+    option :state, aliases: :s, type: :string
+    desc "list", "list tasks for pipeline"
+    def list
+      tasks = !!options[:pipeline_id] ? ::PipelineStageTask.pipeline_tasks(options[:pipeline_id]) : ::PipelineStageTask.where("1")
+      tasks = tasks.where(state: options[:state]) if !!options[:state]
+      tasks.each do |task|
+        puts "#{task.id} | #{task.name} | #{task.state} | #{task.stage.name} | #{task.stage.pipeline.id} | #{task.stage.pipeline.project.uuid}"
+      end
+    end
+
+    desc "process", "processes thje first unprocessed task"
+    def process
+      task = ::Pipeline.processable_tasks.first
+      task.process if task
+    end
   end
 
   class Pipeline < SubCommandBase
+    option :project_uuid, aliases: :u, type: :string, required: true
+    option :name, aliases: :n, type: :string, required: true
+    desc "create_named", "create a named pipeline"
+    def create_named
+      project = ::Project.find_by(uuid: options[:project_uuid])
+      project.create_pipeline options[:name], triggered_by: :console
+    end
 
+    option :pipeline_id, type: :numeric, required: true
+    option :base_dir, type: :string, required: true
     desc "prepare", "prepare the pipeline run"
     def prepare
-      require_relative '../lib/pipeline'
+      pipeline = ::Pipeline.find options[:pipeline_id]
+      pipeline.prepare options[:base_dir]
     end
 
+    option :pipeline_id, type: :numeric, required: true
+    option :base_dir, type: :string, required: true
     desc "execute", "execute the child pipeline"
     def execute
-      require_relative '../lib/pipeline'
     end
 
+    option :pipeline_id, type: :numeric, required: true
+    option :base_dir, type: :string, required: true
     desc "clean", "clean the pipeline after the run"
     def clean
-      require_relative '../lib/pipeline'
     end
 
+    desc "tasks", "manage pipeline tasks"
+    subcommand "tasks", PipelineTask
+  end
+
+  class ProjectSecret < SubCommandBase
+    option :project_uuid, aliases: :u, type: :string, required: true
+    option :name, aliases: :n, type: :string, required: true
+    option :value, aliases: :v, type: :string, required: true
+    desc "add", "add a secret value for this project"
+    def add
+      ::Project.find_by(uuid: options[:project_uuid]).add_to_secret(options[:name], options[:value])
+    end
+  end
+
+  class ProjectConfig < SubCommandBase
+    option :project_uuid, aliases: :u, type: :string, required: true
+    option :name, aliases: :n, type: :string, required: true
+    option :value, aliases: :v, type: :string, required: true
+    desc "add", "add a config value to this project"
+    def add
+      ::Project.find_by(uuid: options[:project_uuid]).add_to_config(options[:name], options[:value])
+    end
   end
 
   class Project < SubCommandBase
@@ -48,32 +100,33 @@ module App
       ::Project.create! name: options[:name], uuid: options[:uuid]
     end
 
-    option :project_uuid, alias: :u, type: :string, required: true
-    option :name, alias: :n, type: :string, required: true
-    option :value, alias: :v, type: :string, required: true
-    desc "add_secret", "add a secret value for this project"
-    def add_secret
-      ::Project.find_by(uuid: options[:project_uuid]).add_to_secret(options[:name], options[:value])
-    end
+    desc "secret", "manage project secrets"
+    subcommand "secret", ProjectSecret
 
-    option :project_uuid, alias: :u, type: :string, required: true
-    option :name, alias: :n, type: :string, required: true
-    option :value, alias: :v, type: :string, required: true
+    desc "config", "manage project configurations"
+    subcommand "config", ProjectConfig
+
+    option :project_uuid, type: :string, required: true
+    option :name,         type: :string, required: true
+    option :value, type: :string, required: true
     desc "add_config", "add a config value for this project"
     def add_config
       ::Project.find_by(uuid: options[:project_uuid]).add_to_config(options[:name], options[:value])
     end
 
-    option :project_uuid, alias: :u, type: :string, required: true
-    options :namespace, alias: :n, type: :string, required: true
+    option :project_uuid, aliases: :u, type: :string, required: true
+    option :namespace, aliases: :n, type: :string, required: true
     desc "set namespace", "set the namespace for this project"
     def set_namespace
       ::Project.set_namespace(options[:project_uuid], options[:namespace])
     end
-
   end
 
   class CLI < Thor
+    def self.exit_on_failure?
+      true
+    end
+
     desc "runner", "start runners and list their tasks"
     subcommand "runner", Runner
 

@@ -1,3 +1,4 @@
+
 class PipelineStage < ApplicationRecord
 
   belongs_to :pipeline, optional: true
@@ -7,22 +8,34 @@ class PipelineStage < ApplicationRecord
 
   before_validation :ensure_task_names
 
-  # def self.parse_stages stages
-  #   validate_stages stages
-  #
-  #   stages.map{|stage| PipelineStage.new(name: stage) }
-  # end
+  after_save :update_parent_state
 
-  # def self.validate_stages stages
-  #   raise "stages must be an arrray" unless stages.instance_of?(Array)
-  #
-  #   stages.each{|stage| raise "stages must be an array of string" unless stage.instance_of?(String) }
-  # end
+  scope :failed, -> { where(state: :failed) }
+  scope :processable, -> { where(state: [:created, :processing]) }
+
+
+  def failed?
+    'failed' == self.state
+  end
+
+  def processable?
+    ['created', 'processing'].include?(self.state)
+  end
 
   def ensure_task_names
     self.tasks.each_with_index do |task, index|
       task.name ||= "#{self.name}-#{index}"
     end
+  end
+
+  def update_state
+    children_states = tasks.map(&:state).map(&:to_sym)
+    self.state = StateTree.determine_state_from_children children_states
+    self.save!
+  end
+
+  def update_parent_state
+    self.pipeline.update_state
   end
 
 end

@@ -1,4 +1,5 @@
 require 'pretty_api'
+require 'state_tree'
 
 class Pipeline < ApplicationRecord
 
@@ -7,6 +8,9 @@ class Pipeline < ApplicationRecord
   has_many :tasks, through: :stages
 
   accepts_nested_attributes_for :stages
+
+  scope :pipeline_tasks, -> (pipeline_id) { includes(stages: :tasks ).where(id: pipeline_id) }
+  scope :processable, -> { where(state: [:created, :processing]) }
 
   def variables_hash= variables
     self.variables = JSON.dump(variables)
@@ -42,9 +46,9 @@ class Pipeline < ApplicationRecord
     pipeline.save!
   end
 
-  def prepare
+  def prepare base_directory
     require 'fileutils'
-    FileUtils.mkdir_p working_directory ENV['TASKS_DIR']
+    FileUtils.mkdir_p working_directory(base_directory)
     v  = self.variables
   end
 
@@ -57,5 +61,28 @@ class Pipeline < ApplicationRecord
   def working_directory base_directory
      base_directory + "/projects/#{project.slug}/pipelines/#{pipeline.id}" + '/build'
   end
+
+  def update_state
+    children_states = self.stages.map(&:state).map(&:to_sym)
+    self.state = StateTree.determine_state_from_children children_states
+    self.save!
+  end
+
+  def self.processable_tasks
+    stages = self.processable
+      .map(&:stages)
+      .reject{|pipeline_stages| pipeline_stages.select(&:failed?).count > 0 }
+      .map{|pipeline_stages| pipeline_stages.select(&:processable?)}
+      .map{|pipeline_stages| pipeline_stages.sort_by{|stage| stage.id } }
+      .map(&:first)
+      .reject(&:nil?)
+      .map(&:tasks)
+      .reject{|stage_tasks| stage_tasks.select(&:failed?).count > 0 }
+      .map{|stage_tasks| stage_tasks.select(&:processable?)}
+      .map{|stage_tasks| stage_tasks.sort_by{|task| task.id } }
+      .map(&:first)
+      .reject(&:nil?)
+  end
+
 
 end
