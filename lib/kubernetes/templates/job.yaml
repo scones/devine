@@ -16,7 +16,7 @@ spec:
       containers:
       - name: undefined
         image: undefined
-        envs:
+        env:
         - name: BASE_DIR
           value: "/devine"
         volumeMounts:
