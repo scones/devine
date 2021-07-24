@@ -3,7 +3,7 @@ stages:
   - name: prepare
     tasks:
       - image: registry.core.build-the-web.com/devine:0.1.4
-        script: devine pipeline prepare --pipeline-id "${PIPELINE_ID}" --base-dir "${BASE_DIR}"
+        script: env; devine pipeline prepare --pipeline-id "${PIPELINE_ID}" --base-dir "${BASE_DIR}"
 
   - name: clone
     tasks:

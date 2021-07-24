@@ -9,8 +9,18 @@ spec:
     spec:
       imagePullSecrets:
       - name: registry-credentials
+      volumes:
+      - name: devine-base-dir
+        persistentVolumeClaim:
+          claimName: devine-base-dir
       containers:
       - name: undefined
         image: undefined
+        envs:
+        - name: BASE_DIR
+          value: "/devine"
+        volumeMounts:
+        - mountPath: /devine
+          name: devine-base-dir
       restartPolicy: Never
   backoffLimit: 0
